@@ -1,0 +1,12 @@
+0 [state] - Fluid (0 - oil, 1 - gas)
+0.1 [m] - Well Radius
+1000 [m] - Well Depth
+1 [m] - Depth Step
+79 [atm] - Initial Bottomhole Pressure
+45 [°С] - Initial Bottomhole  Temperature
+0.02 [K/m] - Geothermal Gradient
+1 [amount] - Number of Inflow Intervals
+800 [m] - Top of Inflow Interval
+830 [m] - Bottom of Inflow Interval
+4 [°С] - Inflow Temperature Shift
+100 [m3/day] - Flow Rate
