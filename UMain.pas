@@ -62,7 +62,7 @@ type
 
 var
   TTSWform: TTTSWform;
-  tM: Integer;
+  tM, Ll: Integer;
   dl, L, T_0, test, test1: Real48;
   T_geo: array of Real48; // geothermal
   ro: array of Real48; // fluid density
@@ -135,12 +135,12 @@ begin
   end;
 end;
 // ------ geothermal distribution calculation ------------------------------- //
-procedure T_g(depth, TG: Double);
+procedure T_g(TG: Double; Ll: Integer);
 var i: Integer;
 begin
 if T_geo[0]=0 then
 begin
-for i := 0 to Trunc(L) do
+for i:=0 to Ll do
 T_geo[i]:=T_0+273.15-TG*i*dl;
 end;
 end;
@@ -225,16 +225,18 @@ begin
   Series3.Clear;
   Series4.Clear;
   Series5.Clear;
-  for i := 0 to Trunc(L) do
+  for i := 0 to Ll do
 begin
   T_geo[i]:=0;
   T[i]:=0;
   p[i]:=0;
+  angle[i]:=0;
 end;
 end;
 
 procedure TTTSWform.exportbtnClick(Sender: TObject);
 var i, j, Size: Integer;
+arg: Double;
 begin
   Size:=Trunc(L);
   ArrayData:=VarArrayCreate([1, Size+2, 1, 7], varVariant);
@@ -250,6 +252,7 @@ begin
     j:=2;
     for i:=0 to Trunc(L) do
     begin
+      arg:=(Ll-i)*dl/cos(DegToRad(angle[Ll-i])); // arg axis (measured depth)
       ArrayData[j, 1]:=(depth-i*dl)/cos(DegToRad(angle[Trunc(L)-i]));
       ArrayData[j, 2]:=T_geo[i];
       ArrayData[j, 3]:=p[i]/101325;
@@ -289,6 +292,7 @@ begin
   Series2.Clear;
   Series3.Clear;
   Series4.Clear;
+  Series5.Clear;
 end;
 
 procedure TTTSWform.geothermalbtnClick(Sender: TObject);
@@ -435,10 +439,11 @@ begin
   if (dl0=0) then dl:=StrToFloat(stepEdit.Text) else dl:=dl0; // depth step
 
   L:=depth/dl; // step amount (vertical)
-  dl:=depth/L; // depth step
+  Ll:=Trunc(L);
+  dl:=depth/Ll; // depth step
   y:=0;
   wellForm.Series1.Clear;
-  for i:=1 to Trunc(L) do
+  for i:=1 to Ll do
   begin
   y:=y+dl*Tan(DegToRad(angle[i]));
     wellForm.Series1.AddXY(y, i*dl, '', clBlack);
@@ -462,14 +467,9 @@ begin
 end;
 
 procedure TTTSWform.TbtnClick(Sender: TObject);
-var i, k, ii: Integer;
-    dT : Double;
+var i, k, ii, Ll: Integer;
+    dT, arg : Double;
 begin
-  Series1.Clear;
-  Series2.Clear;
-  Series3.Clear;
-  Series4.Clear;
-  Series5.Clear;
 // ------ wellbore parameters ----------------------------------------------- //
   depth:=StrToFloat(depthEdit.Text); // well depth
   dl:=StrToFloat(stepEdit.Text); // depth step
@@ -478,28 +478,42 @@ begin
   D:=2*R; // wellbore diameter
   S:=pi*R*R;
   L:=depth/dl; // step amount (vertical)
-  dl:=depth/L; // depth step
+  Ll:=Trunc(L);
+  dl:=depth/Ll; // depth step
 
   k:=1; // perforation interval counter
-  SetLength(ro, Trunc(L));
-  SetLength(visc, Trunc(L));
-  SetLength(T_geo, Trunc(L));
-  SetLength(T, Trunc(L));
-  SetLength(p, Trunc(L));
-  SetLength(angle, Trunc(L));
-  SetLength(v, Trunc(L));
-  SetLength(sQ, Trunc(L));
-  SetLength(Z, Trunc(L));
+  SetLength(ro, Ll);
+  SetLength(visc, Ll);
+  SetLength(T_geo, Ll);
+  SetLength(T, Ll);
+  SetLength(p, Ll);
+  SetLength(angle, Ll);
+  SetLength(v, Ll);
+  SetLength(sQ, Ll);
+  SetLength(Z, Ll);
+// ---- RESET before RE-calculation---- //
+  Series1.Clear;
+  Series2.Clear;
+  Series3.Clear;
+  Series4.Clear;
+  Series5.Clear;
+  for i := 0 to Ll do
+begin
+  T_geo[i]:=0;
+  T[i]:=0;
+  p[i]:=0;
+end;
+
   n:=StrToFloat(intervCountEdit.Text); // number of inflow intervals
   L_top[1]:=depth-StrToFloat(gridForm.strngrd1.Cells[1,1]);
   L_bot[1]:=depth-StrToFloat(gridForm.strngrd1.Cells[2,1]);
   inQ[1]:=StrToFloat(gridForm.strngrd1.Cells[4,1]);
   inT[1]:=StrToFloat(gridForm.strngrd1.Cells[3,1]); // inflow temperature
   T_0:=StrToFloat(botTempEdit.Text); // initial bottomhole temperature
-  T_g(depth, TG);
+  T_g(TG, Ll);
   Series1.Clear;
-  for i:=0 to Trunc(L) do
-  Series1.AddXY(T_geo[i]-273.15, Trunc(L)-i*dl/cos(DegToRad(angle[Trunc(L)-i])), '', clRed); // geothermal plot
+  for i:=0 to Ll do
+  Series1.AddXY(T_geo[i]-273.15, (Ll-i)*dl/cos(DegToRad(angle[Ll-i])), '', clRed); // geothermal plot
 // ------ main constants ---------------------------------------------------- //
   g:=9.8; // gravity constant
   Rg:=8.314; // gas constant
@@ -523,18 +537,19 @@ begin
   Series2.Clear;
 // ************************************************************************** //
 // --------------------------- MAIN CYCLE ----------------------------------- //
-  for i:=1 to Trunc(L) do
+  for i:=1 to Ll do
   begin
+    arg:=(Ll-i)*dl/cos(DegToRad(angle[Ll-i])); // arg axis (measured depth)
     if (i*dl < L_bot[1]) then // bottomhole
     begin
       T_zumpf(i, k);
       v[i]:=1e-5;
-      p[i]:=p[i-1]-dl*ro[i-1]*g*Cos(DegToRad(angle[Trunc(L)-i]));
+      p[i]:=p[i-1]-dl*ro[i-1]*g*Cos(DegToRad(angle[Ll-i]));
       Z[i]:=ZZZ(i);
       fluid_calc(i);
-      Series2.AddXY(T[i]-273.15, Trunc(L)-i*dl/cos(DegToRad(angle[Trunc(L)-i])), '', clBlack);
-      Series3.AddXY(p[i]/101325, Trunc(L)-i*dl/cos(DegToRad(angle[Trunc(L)-i])), '', clBlue);
-      Series5.AddXY(v[i], Trunc(L)-i*dl/cos(DegToRad(angle[Trunc(L)-i])), '', clRed);
+      Series2.AddXY(T[i]-273.15, arg, '', clBlack);
+      Series3.AddXY(p[i]/101325, arg, '', clBlue);
+      Series5.AddXY(v[i], arg, '', clRed);
     end;
     if (i*dl >= L_bot[1]) and (i*dl <= L_top[1]) then // 1st perforation interval (k=1)
     begin
@@ -544,10 +559,10 @@ begin
       T_perf1(i);
       Z[i]:=ZZZ(i);
       fluid_calc(i);
-      Series2.AddXY(T[i]-273.15, Trunc(L)-i*dl/cos(DegToRad(angle[Trunc(L)-i])), '', clBlack);
-      Series3.AddXY(p[i]/101325, Trunc(L)-i*dl/cos(DegToRad(angle[Trunc(L)-i])), '', clBlue);
-      Series4.AddXY(25, Trunc(L)-i*dl/cos(DegToRad(angle[Trunc(L)-i])), '', clBlack);
-      Series5.AddXY(v[i], Trunc(L)-i*dl/cos(DegToRad(angle[Trunc(L)-i])), '', clRed);
+      Series2.AddXY(T[i]-273.15, arg, '', clBlack);
+      Series3.AddXY(p[i]/101325, arg, '', clBlue);
+      Series4.AddXY(25, arg, '', clBlack);
+      Series5.AddXY(v[i], arg, '', clRed);
     end;
     if (k > 1) and (i*dl >= L_bot[k]) and (i*dl <= L_top[k]) then // k-th perforation interval (k>1)
     begin
@@ -558,10 +573,10 @@ begin
       T_perf(i, k);
       Z[i]:=ZZZ(i);
       fluid_calc(i);
-      Series2.AddXY(T[i]-273.15, Trunc(L)-i*dl/cos(DegToRad(angle[Trunc(L)-i])), '', clBlack);
-      Series3.AddXY(p[i]/101325, Trunc(L)-i*dl/cos(DegToRad(angle[Trunc(L)-i])), '', clBlue);
-      Series4.AddXY(25, Trunc(L)-i*dl/cos(DegToRad(angle[Trunc(L)-i])), '', clBlack);
-      Series5.AddXY(v[i], Trunc(L)-i*dl/cos(DegToRad(angle[Trunc(L)-i])), '', clRed);
+      Series2.AddXY(T[i]-273.15, arg, '', clBlack);
+      Series3.AddXY(p[i]/101325, arg, '', clBlue);
+      Series4.AddXY(25, arg, '', clBlack);
+      Series5.AddXY(v[i], arg, '', clRed);
     end;
     if k < n then
     begin
@@ -573,9 +588,9 @@ begin
       T_rocks(i, k);
       Z[i]:=ZZZ(i);
       fluid_calc(i);
-      Series2.AddXY(T[i]-273.15, Trunc(L)-i*dl/cos(DegToRad(angle[Trunc(L)-i])), '', clBlack);
-      Series3.AddXY(p[i]/101325, Trunc(L)-i*dl/cos(DegToRad(angle[Trunc(L)-i])), '', clBlue);
-      Series5.AddXY(v[i], Trunc(L)-i*dl/cos(DegToRad(angle[Trunc(L)-i])), '', clRed);
+      Series2.AddXY(T[i]-273.15, arg, '', clBlack);
+      Series3.AddXY(p[i]/101325, arg, '', clBlue);
+      Series5.AddXY(v[i], arg, '', clRed);
       if (abs(L_bot[k+1]-i*dl) <= 0.01) then k:=k+1;
       end;
     end
@@ -589,9 +604,9 @@ begin
       T_rocks(i, k);
       Z[i]:=ZZZ(i);
       fluid_calc(i);
-      Series2.AddXY(T[i]-273.15, Trunc(L)-i*dl/cos(DegToRad(angle[Trunc(L)-i])), '', clBlack);
-      Series3.AddXY(p[i]/101325, Trunc(L)-i*dl/cos(DegToRad(angle[Trunc(L)-i])), '', clBlue);
-      Series5.AddXY(v[i], Trunc(L)-i*dl/cos(DegToRad(angle[Trunc(L)-i])), '', clRed);
+      Series2.AddXY(T[i]-273.15, arg, '', clBlack);
+      Series3.AddXY(p[i]/101325, arg, '', clBlue);
+      Series5.AddXY(v[i], arg, '', clRed);
       end;
     end;
   end;

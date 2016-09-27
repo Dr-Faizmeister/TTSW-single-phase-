@@ -289,7 +289,6 @@ object TTSWform: TTTSWform
       Top = 121
       Width = 73
       Height = 21
-      Enabled = False
       TabOrder = 4
       Text = '1'
     end
