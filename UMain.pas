@@ -426,7 +426,7 @@ begin
 //  c:=exApp.ActiveCell.Col;
   SetLength(angle, r);
   for i:=4 to r do
-  angle[i]:=exSh.Cells[i, 2];
+  angle[i-4]:=exSh.Cells[i, 2];
 
   // close Excel App
   exApp.Quit;
@@ -524,11 +524,11 @@ end;
 // ------ initial conditions------------------------------------------------- //
   p[0]:=StrToFloat(botPressureEdit.Text)*101325; // initial bot pressure
   T[0]:=T_geo[0]; // initial bottomhole temperature
-  Z[0]:=0.960612;
+  Z[0]:=0.92874;
   if fluid=0 then ro[0]:=800;
   if fluid=1 then ro[0]:=p[0]*M/Z[0]/Rg/T[0]; // initial bottomhole density
   if fluid=0 then visc[0]:=0.002;
-  if fluid=1 then visc[0]:=3.749e-05; // initial bottomhole density
+  if fluid=1 then visc[0]:=3.749e-05; // initial bottomhole viscosity
   c:=3500;  // thermal capacity
   kappa:=0.0150; // piezoconductivity
   tM:=500;  // measuring time

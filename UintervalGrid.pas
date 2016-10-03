@@ -59,10 +59,10 @@ begin
   strngrd1.ColWidths[4]:=100;
 
   strngrd1.Cells[1,1]:=FloatToStr(800);
-  strngrd1.Cells[1,2]:=FloatToStr(750);
+  strngrd1.Cells[1,2]:=FloatToStr(600);
   strngrd1.Cells[1,3]:=FloatToStr(550);
   strngrd1.Cells[2,1]:=FloatToStr(830);
-  strngrd1.Cells[2,2]:=FloatToStr(780);
+  strngrd1.Cells[2,2]:=FloatToStr(640);
   strngrd1.Cells[2,3]:=FloatToStr(580);
   strngrd1.Cells[3,1]:=FloatToStr(5);
   strngrd1.Cells[3,2]:=FloatToStr(4);
