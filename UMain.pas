@@ -145,7 +145,7 @@ if T_geo[0]=0 then
 begin
 for i:=0 to Ll do
 T_geo[i]:=T_0+273.15-TG*i*dl;
-end;
+end
 end;
 // ------ heat transfer coefficient calculation ----------------------------- //
 function alphaG(i:Integer):Double;
@@ -497,7 +497,7 @@ begin
 // ------ wellbore parameters ----------------------------------------------- //
   depth:=StrToFloat(depthEdit.Text); // well depth
   dl:=StrToFloat(stepEdit.Text); // depth step
-  TG:=StrToFloat(tgEdit.Text); // geothermal gradient
+  if not (tgEdit.Text = 'Custom') then TG:=StrToFloat(tgEdit.Text); // geothermal gradient
   R:=StrToFloat(radiusEdit.Text); // wellbore radius
   D:=2*R; // wellbore diameter
   S:=pi*R*R;
@@ -524,7 +524,6 @@ begin
   Series5.Clear;
   for i := 0 to Ll do
 begin
-  T_geo[i]:=0;
   T[i]:=0;
   p[i]:=0;
   if coss[i]=0 then coss[i]:=1;
