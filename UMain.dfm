@@ -237,19 +237,6 @@ object TTSWform: TTTSWform
       Height = 13
       Caption = 'Number of inflow intervals'
     end
-    object Label7: TLabel
-      Left = 60
-      Top = 344
-      Width = 27
-      Height = 13
-      Caption = 'Oil'
-      Font.Charset = ANSI_CHARSET
-      Font.Color = clWindowText
-      Font.Height = -13
-      Font.Name = 'Lucida Console'
-      Font.Style = [fsBold]
-      ParentFont = False
-    end
     object depthEdit: TEdit
       Left = 32
       Top = 75
@@ -378,6 +365,18 @@ object TTSWform: TTTSWform
       Caption = 'RESET'
       TabOrder = 14
       OnClick = clearbtnClick
+    end
+    object rg1: TRadioGroup
+      Left = 32
+      Top = 327
+      Width = 145
+      Height = 51
+      Caption = 'Fluid'
+      ItemIndex = 0
+      Items.Strings = (
+        'Oil'
+        'Gas')
+      TabOrder = 15
     end
   end
   object Chart3: TChart

@@ -5,7 +5,7 @@ interface
 uses
   Windows, Messages, SysUtils, Variants, Classes, Graphics, Controls, Forms,
   Dialogs, StdCtrls, TeEngine, Series, ExtCtrls, TeeProcs, Chart, uMyProcs,
-  ExtDlgs, XPMan, math, ComCtrls, Grids, ExcelXP, OleServer, ComObj,
+  ExtDlgs, XPMan, Math, ComCtrls, Grids, ExcelXP, OleServer, ComObj,
   IdBaseComponent, IdMessage;
 
 type
@@ -42,10 +42,10 @@ type
     Series5: TPointSeries;
     Series1: TPointSeries;
     Series2: TPointSeries;
-    Label7: TLabel;
     geothermalbtn: TButton;
     clearbtn: TButton;
     Series3: TPointSeries;
+    rg1: TRadioGroup;
     procedure TbtnClick(Sender: TObject);
     procedure exportbtnClick(Sender: TObject);
     procedure importbtnClick(Sender: TObject);
@@ -71,6 +71,7 @@ var
   p: array of Real48; // pressure
   v: array of Real48; // velocity
   angle: array of Real48; // inclination angle
+  coss: array of Real48; // cos(angle)
   L_bot: array[0..20] of Real48; // depth of the lower perforation interval
   L_top: array[0..20] of Real48; // depth of the upper perforation interval
   R, D, S, g, Rg, p_c, T_c, acentr, M, kappa, e, n: Real48;
@@ -79,6 +80,8 @@ var
   inro: array[0..20] of Real48; // inflow density
   inT: array[0..20] of Real48; // inflow temperature
   Z: array of Real48; // compressibility
+  MD: array of Real48; // measured depth values
+  TVD: array of Real48; // true vertical depth values
   c, fr, Re, lambda, Pr, Nu,
   R0, depth, depth0, dl0, p0, hbot, htop, inQ0, TG, TG0, inT0, T0,
   n0, Qw, fluid : Real48;
@@ -194,7 +197,7 @@ var E1, E2: Real;
 begin
 //  T[i]:=(v[i]*T[i-1]+inv*(inT[k]+T_geo[i]))/(v[i]+inv);
   E2:=inro[k]*inQ[k]*dl/86400/(L_top[k]-L_bot[k])/S/ro[i-1]/v[i];
-  T[i]:=(inT[k]+T_geo[i])*E2/(1+E2)+(T[i-1])/(1+E2)-g*cos(DegToRad(angle[Trunc(L)-i]))/c;
+  T[i]:=(inT[k]+T_geo[i])*E2/(1+E2)+(T[i-1])/(1+E2)-g*coss[Trunc(L)-i]/c;
 end;
 // ------- pressure calculation --------------------------------------------- //
 function press(i, k: Integer):Double;
@@ -202,7 +205,7 @@ begin
   Re:=(ro[i-1]*v[i]*D)/visc[i-1];
   if (Re > 2100) then fr:=0.316/power(Re, 0.25)
   else fr:=64/Re;
-  Result:=p[i-1]-dl*((ro[i-1]*g*Cos(DegToRad(angle[Trunc(L)-i])))+(ro[i-1]*sqr(v[i])*fr)/(2*D));
+  Result:=p[i-1]-dl*((ro[i-1]*g*coss[Trunc(L)-i])+(ro[i-1]*sqr(v[i])*fr)/(2*D));
 end;
 // -------- read input file ------------------------------------------------- //
 function GetParametr(s1_:string):real;
@@ -252,8 +255,8 @@ begin
     j:=2;
     for i:=0 to Trunc(L) do
     begin
-      arg:=(Ll-i)*dl/cos(DegToRad(angle[Ll-i])); // arg axis (measured depth)
-      ArrayData[j, 1]:=(depth-i*dl)/cos(DegToRad(angle[Trunc(L)-i]));
+      arg:=(Ll-i)*dl/coss[Ll-i]; // arg axis (measured depth)
+      ArrayData[j, 1]:=(depth-i*dl)/coss[Trunc(L)-i];
       ArrayData[j, 2]:=T_geo[i];
       ArrayData[j, 3]:=p[i]/101325;
       ArrayData[j, 4]:=T[i];
@@ -384,13 +387,13 @@ begin
   gridForm.strngrd1.Cells[2,1]:=FloatToStr(hbot);
   gridForm.strngrd1.Cells[3,1]:=FloatToStr(inT0);
   gridForm.strngrd1.Cells[4,1]:=FloatToStr(inQ0);
-  if fluid=0 then TTSWform.Label7.Caption:='Oil';
-  if fluid=1 then TTSWform.Label7.Caption:='Gas';
+  if fluid=0 then TTSWform.rg1.ItemIndex:=0;
+  if fluid=1 then TTSWform.rg1.ItemIndex:=1;
 end;
 
 procedure TTTSWform.inclineButtonClick(Sender: TObject);
 var
-  i, r: Integer;
+  i, r, j: Integer;
   exApp, exBook, exSh : Variant;
   y: Real;
 begin
@@ -424,9 +427,13 @@ begin
   // last row
   r:=exApp.ActiveCell.Row;
 //  c:=exApp.ActiveCell.Col;
-  SetLength(angle, r);
-  for i:=4 to r do
-  angle[i-4]:=exSh.Cells[i, 2];
+  SetLength(MD, r-1);
+  SetLength(TVD, r-1);
+  for i:=2 to r do
+  begin
+    MD[i-2]:=exSh.Cells[i, 1];
+    TVD[i-2]:=exSh.Cells[i, 2];
+  end;
 
   // close Excel App
   exApp.Quit;
@@ -435,17 +442,34 @@ begin
   exApp:=Unassigned;
   exSh:=Unassigned;
 
-  if (depth0=0) then depth:=StrToFloat(depthEdit.Text) else depth:=depth0; // well vertical depth
+  if (depth0=0) then depth:=StrToFloat(depthEdit.Text) else depth:=depth0; // all vertical depth
   if (dl0=0) then dl:=StrToFloat(stepEdit.Text) else dl:=dl0; // depth step
 
   L:=depth/dl; // step amount (vertical)
   Ll:=Trunc(L);
   dl:=depth/Ll; // depth step
+
+  SetLength(coss, Ll);
+  SetLength(angle, Ll);
+  j:=0; // "MD <-> TVD counter"
+  for i:=0 to Ll do
+  begin
+    if (j+1 < r) then
+    begin
+      coss[i]:=TVD[j]/MD[j];
+      angle[i]:=ArcCos(coss[i]);
+    if (Abs(i*dl-TVD[j]) <= 0.01) then j:=j+1;
+    end
+    else begin
+      coss[i]:=coss[i-1];
+      angle[i]:=ArcCos(coss[i]);
+    end;
+  end;
   y:=0;
   wellForm.Series1.Clear;
   for i:=1 to Ll do
   begin
-  y:=y+dl*Tan(DegToRad(angle[i]));
+  y:=y+dl*Tan(angle[i]);
     wellForm.Series1.AddXY(y, i*dl, '', clBlack);
   end;
 
@@ -487,6 +511,7 @@ begin
   SetLength(T_geo, Ll);
   SetLength(T, Ll);
   SetLength(p, Ll);
+  SetLength(coss, Ll);
   SetLength(angle, Ll);
   SetLength(v, Ll);
   SetLength(sQ, Ll);
@@ -502,6 +527,7 @@ begin
   T_geo[i]:=0;
   T[i]:=0;
   p[i]:=0;
+  if coss[i]=0 then coss[i]:=1;
 end;
 
   n:=StrToFloat(intervCountEdit.Text); // number of inflow intervals
@@ -513,7 +539,7 @@ end;
   T_g(TG, Ll);
   Series1.Clear;
   for i:=0 to Ll do
-  Series1.AddXY(T_geo[i]-273.15, (Ll-i)*dl/cos(DegToRad(angle[Ll-i])), '', clRed); // geothermal plot
+  Series1.AddXY(T_geo[i]-273.15, (Ll-i)*dl/coss[Ll-i], '', clRed); // geothermal plot
 // ------ main constants ---------------------------------------------------- //
   g:=9.8; // gravity constant
   Rg:=8.314; // gas constant
@@ -525,6 +551,9 @@ end;
   p[0]:=StrToFloat(botPressureEdit.Text)*101325; // initial bot pressure
   T[0]:=T_geo[0]; // initial bottomhole temperature
   Z[0]:=0.92874;
+  if (rg1.ItemIndex = 0) then fluid:=0;
+  if (rg1.ItemIndex = 1) then fluid:=1;
+
   if fluid=0 then ro[0]:=800;
   if fluid=1 then ro[0]:=p[0]*M/Z[0]/Rg/T[0]; // initial bottomhole density
   if fluid=0 then visc[0]:=0.002;
@@ -539,12 +568,12 @@ end;
 // --------------------------- MAIN CYCLE ----------------------------------- //
   for i:=1 to Ll do
   begin
-    arg:=(Ll-i)*dl/cos(DegToRad(angle[Ll-i])); // arg axis (measured depth)
+    arg:=(Ll-i)*dl/coss[Ll-i]; // arg axis (measured depth)
     if (i*dl < L_bot[1]) then // bottomhole
     begin
       T_zumpf(i, k);
       v[i]:=1e-5;
-      p[i]:=p[i-1]-dl*ro[i-1]*g*Cos(DegToRad(angle[Ll-i]));
+      p[i]:=p[i-1]-dl*ro[i-1]*g*coss[Ll-i];
       Z[i]:=ZZZ(i);
       fluid_calc(i);
       Series2.AddXY(T[i]-273.15, arg, '', clBlack);
