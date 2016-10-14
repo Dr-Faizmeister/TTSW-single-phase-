@@ -74,7 +74,7 @@ var
   coss: array of Real48; // cos(angle)
   L_bot: array[0..20] of Real48; // depth of the lower perforation interval
   L_top: array[0..20] of Real48; // depth of the upper perforation interval
-  R, D, S, g, Rg, p_c, T_c, acentr, M, kappa, e, n: Real48;
+  R, R_in, D, S, g, Rg, p_c, T_c, acentr, M, kappa, e, n: Real48;
   sQ: array of Real48; // velocity of fluid
   inQ: array[0..20] of Real48; // inflow rate
   inro: array[0..20] of Real48; // inflow density
@@ -82,9 +82,9 @@ var
   Z: array of Real48; // compressibility
   MD: array of Real48; // measured depth values
   TVD: array of Real48; // true vertical depth values
-  c, fr, Re, lambda, Pr, Nu,
-  R0, depth, depth0, dl0, p0, hbot, htop, inQ0, TG, TG0, inT0, T0,
-  n0, Qw, fluid : Real48;
+  c, fr, Re, lambda, lambda_for, lambda_cas, ro_for, c_for, Pr, Nu,
+  alpha_for, h_fluid, h_cas, h_for, T_d, time_d, tau, R0, depth, depth0, dl0,
+  p0, hbot, htop, inQ0, TG, TG0, inT0, T0, n0, Qw, fluid : Real48;
   tempfile, inFile: TextFile;
   Excel, WorkBook, List1, FSheet, Range, ArrayData, Cell1, Cell2: Variant;
   input_file_name, s1_, s2_: String;
@@ -147,7 +147,7 @@ for i:=0 to Ll do
 T_geo[i]:=T_0+273.15-TG*i*dl;
 end
 end;
-// ------ heat transfer coefficient calculation ----------------------------- //
+// ------ overall heat transfer coefficient calculation --------------------- //
 function alphaG(i:Integer):Double;
 begin
   Pr:=c*visc[i-1]/lambda;
@@ -161,9 +161,16 @@ begin
   end;
   if (Re > 4000) then
   begin
-    Nu:=0.021*power(Re, 0.8)*power(Pr, 0.43);
+    Nu:=0.021*power(Re, 0.8)*power(Pr, 0.43); // Nusselt calculation
   end;
-  Result:=(lambda*Nu)/D;
+    h_fluid:=(lambda*Nu)/D; // heat transfer (fluid)
+    h_cas:=lambda_cas/(R_in*Ln(R/R_in)); // heat transfer (casing)
+    alpha_for:=lambda_for/c_for/ro_for;
+    time_d:=alpha_for*tau/R/R;
+    T_d:=Ln(Exp(-0.2*time_d)+(1.5-0.3719*Exp(-time_d)*sqrt(time_d)));
+    h_for:=lambda_for/(R*T_d); // heat transfer (formation)
+
+    Result:=1/((1/h_fluid)+(1/h_cas)+(R_in/R/h_for));
 end;
 // ------- heat exchange with the rocks ------------------------------------- //
 procedure T_rocks(i, k: Integer);
@@ -561,6 +568,13 @@ end;
   kappa:=0.0150; // piezoconductivity
   tM:=500;  // measuring time
   lambda:=0.065;
+  lambda_for:=2;
+  ro_for:=2500;
+  c_for:=800;
+  lambda_cas:=1.3;
+  R_in:=R-0.02; // inner wellbore radius
+  tau:=86400;
+
 // -------------------------------------------------------------------------- //
   Series2.Clear;
 // ************************************************************************** //

@@ -269,7 +269,7 @@ object TTSWform: TTTSWform
       Width = 74
       Height = 21
       TabOrder = 3
-      Text = '0,1'
+      Text = '0,12'
     end
     object stepEdit: TEdit
       Left = 32
