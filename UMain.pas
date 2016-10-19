@@ -37,7 +37,6 @@ type
     chk1: TCheckBox;
     Od: TOpenDialog;
     IdMessage1: TIdMessage;
-    Series4: TPointSeries;
     Chart3: TChart;
     Series5: TPointSeries;
     Series1: TPointSeries;
@@ -46,6 +45,7 @@ type
     clearbtn: TButton;
     Series3: TPointSeries;
     rg1: TRadioGroup;
+    horizontal1: THorizAreaSeries;
     procedure TbtnClick(Sender: TObject);
     procedure exportbtnClick(Sender: TObject);
     procedure importbtnClick(Sender: TObject);
@@ -82,8 +82,8 @@ var
   Z: array of Real48; // compressibility
   MD: array of Real48; // measured depth values
   TVD: array of Real48; // true vertical depth values
-  c, fr, Re, lambda, lambda_for, lambda_cas, ro_for, c_for, Pr, Nu,
-  alpha_for, h_fluid, h_cas, h_for, T_d, time_d, tau, R0, depth, depth0, dl0,
+  c, fr, Re, lambda, lambda_for, lambda_cem, ro_for, c_for, Pr, Nu,
+  alpha_for, h_fluid, h_cem, h_for, T_d, time_d, tau, R0, depth, depth0, dl0,
   p0, hbot, htop, inQ0, TG, TG0, inT0, T0, n0, Qw, fluid : Real48;
   tempfile, inFile: TextFile;
   Excel, WorkBook, List1, FSheet, Range, ArrayData, Cell1, Cell2: Variant;
@@ -130,7 +130,7 @@ begin
   if fluid=1 then ro[i]:=p[i]*M/Z[i]/Rg/T[i];
   if fluid=0 then e:=0.0000004;
   if fluid=1 then e:=-0.000004;
-  if fluid=0 then visc[i]:=0.002;
+  if fluid=0 then visc[i]:=0.0005;
   if fluid=1 then begin
   critical_visc:=1.61*sqrt(M)*power(p_c/1000, 2/3)/power(T_c, 1/6);
   if (T[i]/T_c < 1) then visc[i]:=(critical_visc*power(T[i]/T_c, 0.965))/1000000;
@@ -163,14 +163,14 @@ begin
   begin
     Nu:=0.021*power(Re, 0.8)*power(Pr, 0.43); // Nusselt calculation
   end;
-    h_fluid:=(lambda*Nu)/D; // heat transfer (fluid)
-    h_cas:=lambda_cas/(R_in*Ln(R/R_in)); // heat transfer (casing)
+    Result{h_fluid}:=(lambda*Nu)/D; // heat transfer (fluid)
+    h_cem:=lambda_cem/(R_in*Ln(R/R_in)); // heat transfer (casing)
     alpha_for:=lambda_for/c_for/ro_for;
     time_d:=alpha_for*tau/R/R;
     T_d:=Ln(Exp(-0.2*time_d)+(1.5-0.3719*Exp(-time_d)*sqrt(time_d)));
     h_for:=lambda_for/(R*T_d); // heat transfer (formation)
 
-    Result:=1/((1/h_fluid)+(1/h_cas)+(R_in/R/h_for));
+//    Result:=1/((1/h_fluid)+(1/h_cem)+(R_in/R/h_for));
 end;
 // ------- heat exchange with the rocks ------------------------------------- //
 procedure T_rocks(i, k: Integer);
@@ -233,7 +233,7 @@ begin
   Series1.Clear;
   Series2.Clear;
   Series3.Clear;
-  Series4.Clear;
+  horizontal1.Clear;
   Series5.Clear;
   for i := 0 to Ll do
 begin
@@ -301,7 +301,7 @@ begin
   Series1.Clear;
   Series2.Clear;
   Series3.Clear;
-  Series4.Clear;
+  horizontal1.Clear;
   Series5.Clear;
 end;
 
@@ -506,7 +506,6 @@ begin
   dl:=StrToFloat(stepEdit.Text); // depth step
   if not (tgEdit.Text = 'Custom') then TG:=StrToFloat(tgEdit.Text); // geothermal gradient
   R:=StrToFloat(radiusEdit.Text); // wellbore radius
-  D:=2*R; // wellbore diameter
   S:=pi*R*R;
   L:=depth/dl; // step amount (vertical)
   Ll:=Trunc(L);
@@ -527,7 +526,7 @@ begin
   Series1.Clear;
   Series2.Clear;
   Series3.Clear;
-  Series4.Clear;
+  horizontal1.Clear;
   Series5.Clear;
   for i := 0 to Ll do
 begin
@@ -562,18 +561,19 @@ end;
 
   if fluid=0 then ro[0]:=800;
   if fluid=1 then ro[0]:=p[0]*M/Z[0]/Rg/T[0]; // initial bottomhole density
-  if fluid=0 then visc[0]:=0.002;
+  if fluid=0 then visc[0]:=0.0005;
   if fluid=1 then visc[0]:=3.749e-05; // initial bottomhole viscosity
   c:=3500;  // thermal capacity
   kappa:=0.0150; // piezoconductivity
   tM:=500;  // measuring time
   lambda:=0.065;
-  lambda_for:=2;
+  lambda_for:=1.73;
   ro_for:=2500;
   c_for:=800;
-  lambda_cas:=1.3;
+  lambda_cem:=0.35;
   R_in:=R-0.02; // inner wellbore radius
-  tau:=86400;
+  D:=2*R_in; // flux diameter
+  tau:=720;
 
 // -------------------------------------------------------------------------- //
   Series2.Clear;
@@ -603,7 +603,10 @@ end;
       fluid_calc(i);
       Series2.AddXY(T[i]-273.15, arg, '', clBlack);
       Series3.AddXY(p[i]/101325, arg, '', clBlue);
-      Series4.AddXY(25, arg, '', clBlack);
+      horizontal1.AddXY(0, depth-L_top[k]);
+      horizontal1.AddXY(100, depth-L_top[k]);
+//      horizontal1.AddXY(0, depth-L_bot[k]);
+//      horizontal1.AddXY(0, depth-L_bot[k]);
       Series5.AddXY(v[i], arg, '', clRed);
     end;
     if (k > 1) and (i*dl >= L_bot[k]) and (i*dl <= L_top[k]) then // k-th perforation interval (k>1)
@@ -617,7 +620,7 @@ end;
       fluid_calc(i);
       Series2.AddXY(T[i]-273.15, arg, '', clBlack);
       Series3.AddXY(p[i]/101325, arg, '', clBlue);
-      Series4.AddXY(25, arg, '', clBlack);
+//      horizontal1.AddXY(100, depth-L_bot[k]);
       Series5.AddXY(v[i], arg, '', clRed);
     end;
     if k < n then
@@ -633,6 +636,7 @@ end;
       Series2.AddXY(T[i]-273.15, arg, '', clBlack);
       Series3.AddXY(p[i]/101325, arg, '', clBlue);
       Series5.AddXY(v[i], arg, '', clRed);
+      horizontal1.AddXY(100, depth-L_bot[k]);
       if (abs(L_bot[k+1]-i*dl) <= 0.01) then k:=k+1;
       end;
     end
@@ -649,6 +653,7 @@ end;
       Series2.AddXY(T[i]-273.15, arg, '', clBlack);
       Series3.AddXY(p[i]/101325, arg, '', clBlue);
       Series5.AddXY(v[i], arg, '', clRed);
+      horizontal1.AddXY(100, depth-L_bot[k]);
       end;
     end;
   end;

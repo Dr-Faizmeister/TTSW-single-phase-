@@ -21,11 +21,17 @@ object TTSWform: TTTSWform
     Height = 590
     Cursor = crCross
     Legend.Visible = False
+    PrintProportional = False
     Title.Font.Color = -1
     Title.Font.Name = 'Leelawadee UI'
     Title.Font.Style = [fsBold]
     Title.Text.Strings = (
       'Temperature, '#176#1057)
+    BottomAxis.Automatic = False
+    BottomAxis.AutomaticMaximum = False
+    BottomAxis.AutomaticMinimum = False
+    BottomAxis.Maximum = 50.000000000000000000
+    BottomAxis.Minimum = 20.000000000000000000
     BottomAxis.PositionPercent = 100.000000000000000000
     LeftAxis.Grid.SmallDots = True
     LeftAxis.Inverted = True
@@ -36,11 +42,11 @@ object TTSWform: TTTSWform
     Color = clWhite
     TabOrder = 0
     PrintMargins = (
-      35
-      15
-      35
-      15)
-    ColorPaletteIndex = 13
+      38
+      13
+      38
+      18)
+    ColorPaletteIndex = 10
     object Series1: TPointSeries
       Marks.Arrow.Visible = True
       Marks.Callout.Brush.Color = clBlack
@@ -48,12 +54,12 @@ object TTSWform: TTTSWform
       Marks.Callout.Length = 8
       Marks.Visible = False
       ClickableLine = False
-      Pointer.Brush.Color = 192
-      Pointer.Brush.Gradient.EndColor = 10708548
-      Pointer.Gradient.EndColor = 10708548
+      Pointer.Brush.Color = -1
+      Pointer.Brush.Gradient.EndColor = 390140
+      Pointer.Gradient.EndColor = 390140
       Pointer.HorizSize = 1
       Pointer.InflateMargins = True
-      Pointer.Pen.Color = 192
+      Pointer.Pen.Color = -1
       Pointer.Style = psRectangle
       Pointer.VertSize = 1
       Pointer.Visible = True
@@ -64,8 +70,8 @@ object TTSWform: TTTSWform
       Data = {
         0241000000000000000000000000000020000000000000000000000020000000
         0000000000000000200000000000000000000000200000000000000000000000
-        2000000000000000000000002000000000000053400000002000000000004050
-        4000000020000000000000000000000020000000000000000000000020000000
+        2000000000000000000000002000000000000000000000002000000000000000
+        0000000020000000000000000000000020000000000000000000000020000000
         0000000000000000200000000000000000000000200000000000000000000000
         2000000000000000000000002000000000000000000000002000000000000000
         0000000020000000000000000000000020000000000000000000000020000000
@@ -88,23 +94,6 @@ object TTSWform: TTTSWform
         1F0000000000000000FFFFFF1F0000000000000000FFFFFF1F00000000000000
         00FFFFFF1F0000000000000000FFFFFF1F}
     end
-    object Series4: TPointSeries
-      Marks.Arrow.Visible = True
-      Marks.Callout.Brush.Color = clBlack
-      Marks.Callout.Arrow.Visible = True
-      Marks.Visible = False
-      ClickableLine = False
-      Pointer.Brush.Gradient.EndColor = 3513587
-      Pointer.Gradient.EndColor = 3513587
-      Pointer.InflateMargins = True
-      Pointer.Style = psRectangle
-      Pointer.VertSize = 2
-      Pointer.Visible = True
-      XValues.Name = 'X'
-      XValues.Order = loAscending
-      YValues.Name = 'Y'
-      YValues.Order = loNone
-    end
     object Series2: TPointSeries
       Marks.Arrow.Visible = True
       Marks.Callout.Brush.Color = clBlack
@@ -112,12 +101,13 @@ object TTSWform: TTTSWform
       Marks.Callout.Length = 8
       Marks.Visible = False
       DataSource = Series1
-      SeriesColor = 3513587
       ClickableLine = False
-      Pointer.Brush.Gradient.EndColor = 3513587
-      Pointer.Gradient.EndColor = 3513587
+      Pointer.Brush.Color = 168
+      Pointer.Brush.Gradient.EndColor = 156927
+      Pointer.Gradient.EndColor = 156927
       Pointer.HorizSize = 1
       Pointer.InflateMargins = True
+      Pointer.Pen.Color = 155
       Pointer.Style = psRectangle
       Pointer.VertSize = 1
       Pointer.Visible = True
@@ -125,6 +115,26 @@ object TTSWform: TTTSWform
       XValues.Order = loAscending
       YValues.Name = 'Y'
       YValues.Order = loNone
+    end
+    object horizontal1: THorizAreaSeries
+      Gradient.Direction = gdRightLeft
+      Marks.Arrow.Visible = True
+      Marks.Callout.Brush.Color = clBlack
+      Marks.Callout.Arrow.Visible = True
+      Marks.Visible = False
+      SeriesColor = 4227327
+      AreaChartBrush.Color = -1
+      DrawArea = True
+      Pointer.Brush.Gradient.EndColor = 395485
+      Pointer.Gradient.EndColor = 395485
+      Pointer.InflateMargins = True
+      Pointer.Style = psRectangle
+      Pointer.Visible = False
+      Transparency = 75
+      XValues.Name = 'X'
+      XValues.Order = loNone
+      YValues.Name = 'Y'
+      YValues.Order = loAscending
     end
   end
   object Chart2: TChart
