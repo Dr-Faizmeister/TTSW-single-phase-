@@ -6,7 +6,7 @@ uses
   Windows, Messages, SysUtils, Variants, Classes, Graphics, Controls, Forms,
   Dialogs, StdCtrls, TeEngine, Series, ExtCtrls, TeeProcs, Chart, uMyProcs,
   ExtDlgs, XPMan, Math, ComCtrls, Grids, ExcelXP, OleServer, ComObj,
-  IdBaseComponent, IdMessage;
+  IdBaseComponent, IdMessage, Spin;
 
 type
   TTTSWform = class(TForm)
@@ -31,7 +31,6 @@ type
     botTempEdit: TEdit;
     Label10: TLabel;
     intervalsbtn: TButton;
-    intervCountEdit: TEdit;
     Label6: TLabel;
     inclineButton: TButton;
     chk1: TCheckBox;
@@ -46,6 +45,7 @@ type
     Series3: TPointSeries;
     rg1: TRadioGroup;
     horizontal1: THorizAreaSeries;
+    se1: TSpinEdit;
     procedure TbtnClick(Sender: TObject);
     procedure exportbtnClick(Sender: TObject);
     procedure importbtnClick(Sender: TObject);
@@ -57,12 +57,13 @@ type
   private
     { Private declarations }
   public
+  const iCounter = 2; // iterations counter
     { Public declarations }
   end;
 
 var
   TTSWform: TTTSWform;
-  tM, Ll: Integer;
+  tM, Ll, iCounter: Integer;
   dl, L, T_0, test, test1: Real48;
   T_geo: array of Real48; // geothermal
   ro: array of Real48; // fluid density
@@ -490,7 +491,7 @@ end;
 procedure TTTSWform.intervalsbtnClick(Sender: TObject);
 var i: Integer;
 begin
-  n:=StrToFloat(intervCountEdit.Text);
+  n:=se1.Value;
   depth:=StrToFloat(depthEdit.Text);
   gridForm.strngrd1.RowCount:=Trunc(n+1);
   for i:=1 to Trunc(n) do gridForm.strngrd1.Cells[0,i]:=IntToStr(i);
@@ -501,6 +502,8 @@ procedure TTTSWform.TbtnClick(Sender: TObject);
 var i, k, ii, Ll: Integer;
     dT, arg : Double;
 begin
+  for ii := 0 to iCounter do
+  begin
 // ------ wellbore parameters ----------------------------------------------- //
   depth:=StrToFloat(depthEdit.Text); // well depth
   dl:=StrToFloat(stepEdit.Text); // depth step
@@ -534,8 +537,7 @@ begin
   p[i]:=0;
   if coss[i]=0 then coss[i]:=1;
 end;
-
-  n:=StrToFloat(intervCountEdit.Text); // number of inflow intervals
+  n:=se1.Value; // number of inflow intervals
   L_top[1]:=depth-StrToFloat(gridForm.strngrd1.Cells[1,1]);
   L_bot[1]:=depth-StrToFloat(gridForm.strngrd1.Cells[2,1]);
   inQ[1]:=StrToFloat(gridForm.strngrd1.Cells[4,1]);
@@ -558,7 +560,6 @@ end;
   Z[0]:=0.92874;
   if (rg1.ItemIndex = 0) then fluid:=0;
   if (rg1.ItemIndex = 1) then fluid:=1;
-
   if fluid=0 then ro[0]:=800;
   if fluid=1 then ro[0]:=p[0]*M/Z[0]/Rg/T[0]; // initial bottomhole density
   if fluid=0 then visc[0]:=0.0005;
@@ -573,8 +574,7 @@ end;
   lambda_cem:=0.35;
   R_in:=R-0.02; // inner wellbore radius
   D:=2*R_in; // flux diameter
-  tau:=720;
-
+  tau:=720; // time to establish
 // -------------------------------------------------------------------------- //
   Series2.Clear;
 // ************************************************************************** //
@@ -603,10 +603,10 @@ end;
       fluid_calc(i);
       Series2.AddXY(T[i]-273.15, arg, '', clBlack);
       Series3.AddXY(p[i]/101325, arg, '', clBlue);
-      horizontal1.AddXY(0, depth-L_top[k]);
-      horizontal1.AddXY(100, depth-L_top[k]);
-//      horizontal1.AddXY(0, depth-L_bot[k]);
-//      horizontal1.AddXY(0, depth-L_bot[k]);
+      horizontal1.AddXY(0, (depth-L_bot[k])/coss[Ll-i]);;
+      horizontal1.AddXY(100, (depth-L_bot[k])/coss[Ll-i]);
+      horizontal1.AddXY(100, (depth-L_top[k])/coss[Ll-i]);
+      horizontal1.AddXY(0, (depth-L_top[k])/coss[Ll-i]);
       Series5.AddXY(v[i], arg, '', clRed);
     end;
     if (k > 1) and (i*dl >= L_bot[k]) and (i*dl <= L_top[k]) then // k-th perforation interval (k>1)
@@ -620,7 +620,10 @@ end;
       fluid_calc(i);
       Series2.AddXY(T[i]-273.15, arg, '', clBlack);
       Series3.AddXY(p[i]/101325, arg, '', clBlue);
-//      horizontal1.AddXY(100, depth-L_bot[k]);
+      horizontal1.AddXY(0, (depth-L_bot[k])/coss[Ll-i]);
+      horizontal1.AddXY(100, (depth-L_bot[k])/coss[Ll-i]);
+      horizontal1.AddXY(100, (depth-L_top[k])/coss[Ll-i]);
+      horizontal1.AddXY(0, (depth-L_top[k])/coss[Ll-i]);
       Series5.AddXY(v[i], arg, '', clRed);
     end;
     if k < n then
@@ -636,7 +639,6 @@ end;
       Series2.AddXY(T[i]-273.15, arg, '', clBlack);
       Series3.AddXY(p[i]/101325, arg, '', clBlue);
       Series5.AddXY(v[i], arg, '', clRed);
-      horizontal1.AddXY(100, depth-L_bot[k]);
       if (abs(L_bot[k+1]-i*dl) <= 0.01) then k:=k+1;
       end;
     end
@@ -653,9 +655,11 @@ end;
       Series2.AddXY(T[i]-273.15, arg, '', clBlack);
       Series3.AddXY(p[i]/101325, arg, '', clBlue);
       Series5.AddXY(v[i], arg, '', clRed);
-      horizontal1.AddXY(100, depth-L_bot[k]);
       end;
     end;
   end;
+  end;
+//  mouse_event(MOUSEEVENTF_LEFTDOWN, 0, 0, 0 ,0);
+//  mouse_event(MOUSEEVENTF_LEFTUP, 0, 0, 0 ,0);
 end;
 end.

@@ -122,15 +122,15 @@ object TTSWform: TTTSWform
       Marks.Callout.Brush.Color = clBlack
       Marks.Callout.Arrow.Visible = True
       Marks.Visible = False
-      SeriesColor = 4227327
+      SeriesColor = 8421631
       AreaChartBrush.Color = -1
       DrawArea = True
-      Pointer.Brush.Gradient.EndColor = 395485
-      Pointer.Gradient.EndColor = 395485
+      Pointer.Brush.Gradient.EndColor = 4227327
+      Pointer.Gradient.EndColor = 4227327
       Pointer.InflateMargins = True
       Pointer.Style = psRectangle
       Pointer.Visible = False
-      Transparency = 75
+      Transparency = 99
       XValues.Name = 'X'
       XValues.Order = loNone
       YValues.Name = 'Y'
@@ -189,6 +189,14 @@ object TTSWform: TTTSWform
       XValues.Order = loAscending
       YValues.Name = 'Y'
       YValues.Order = loNone
+      Data = {
+        0019000000000000000000000000000000000000000000000000000000000000
+        0000000000000000000000000000000000000000000000000000000000000000
+        000000000000000000008031400000000000404F400000000000906540000000
+        0000C047400000000000004E4000000000009065400000000000205240000000
+        000080314000000000006053400000000000D061400000000000E06A40000000
+        0000D066400000000000B06D400000000000C067400000000000805640000000
+        00007062400000000000A06440}
     end
   end
   object pnl1: TPanel
@@ -331,21 +339,13 @@ object TTSWform: TTTSWform
       TabOrder = 9
       OnClick = intervalsbtnClick
     end
-    object intervCountEdit: TEdit
-      Left = 32
-      Top = 300
-      Width = 73
-      Height = 21
-      TabOrder = 10
-      Text = '1'
-    end
     object inclineButton: TButton
       Left = 38
       Top = 490
       Width = 75
       Height = 25
       Caption = 'Inclinometry'
-      TabOrder = 11
+      TabOrder = 10
       OnClick = inclineButtonClick
     end
     object chk1: TCheckBox
@@ -356,7 +356,7 @@ object TTSWform: TTTSWform
       Caption = 'Show Well Form'
       Checked = True
       State = cbChecked
-      TabOrder = 12
+      TabOrder = 11
     end
     object geothermalbtn: TButton
       Left = 120
@@ -364,7 +364,7 @@ object TTSWform: TTTSWform
       Width = 74
       Height = 21
       Caption = 'Load'
-      TabOrder = 13
+      TabOrder = 12
       OnClick = geothermalbtnClick
     end
     object clearbtn: TButton
@@ -373,7 +373,7 @@ object TTSWform: TTTSWform
       Width = 73
       Height = 25
       Caption = 'RESET'
-      TabOrder = 14
+      TabOrder = 13
       OnClick = clearbtnClick
     end
     object rg1: TRadioGroup
@@ -386,7 +386,17 @@ object TTSWform: TTTSWform
       Items.Strings = (
         'Oil'
         'Gas')
+      TabOrder = 14
+    end
+    object se1: TSpinEdit
+      Left = 32
+      Top = 296
+      Width = 73
+      Height = 22
+      MaxValue = 0
+      MinValue = 0
       TabOrder = 15
+      Value = 2
     end
   end
   object Chart3: TChart
@@ -429,6 +439,14 @@ object TTSWform: TTTSWform
       XValues.Order = loAscending
       YValues.Name = 'Y'
       YValues.Order = loNone
+      Data = {
+        00190000000000000000E07F400000000000C483400000000000988240000000
+        0000D081400000000000008440000000000098874000000000005C8740000000
+        0000588640000000000088834000000000008482400000000000687F40000000
+        00004080400000000000FC8240000000000008814000000000007C8040000000
+        000028844000000000006880400000000000407F4000000000001C8140000000
+        000090804000000000004C834000000000005485400000000000348740000000
+        00008883400000000000248340}
     end
   end
   object InputFile: TOpenTextFileDialog
