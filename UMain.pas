@@ -131,7 +131,7 @@ begin
   if fluid=1 then ro[i]:=p[i]*M/Z[i]/Rg/T[i];
   if fluid=0 then e:=0.0000004;
   if fluid=1 then e:=-0.000004;
-  if fluid=0 then visc[i]:=0.0005;
+  if fluid=0 then visc[i]:=0.002;
   if fluid=1 then begin
   critical_visc:=1.61*sqrt(M)*power(p_c/1000, 2/3)/power(T_c, 1/6);
   if (T[i]/T_c < 1) then visc[i]:=(critical_visc*power(T[i]/T_c, 0.965))/1000000;
@@ -164,14 +164,13 @@ begin
   begin
     Nu:=0.021*power(Re, 0.8)*power(Pr, 0.43); // Nusselt calculation
   end;
-    Result{h_fluid}:=(lambda*Nu)/D; // heat transfer (fluid)
+    h_fluid:=(lambda*Nu)/D; // heat transfer (fluid)
     h_cem:=lambda_cem/(R_in*Ln(R/R_in)); // heat transfer (casing)
-    alpha_for:=lambda_for/c_for/ro_for;
-    time_d:=alpha_for*tau/R/R;
-    T_d:=Ln(Exp(-0.2*time_d)+(1.5-0.3719*Exp(-time_d)*sqrt(time_d)));
+    alpha_for:=lambda_for/(c_for*ro_for);
+    time_d:=alpha_for*tau*R*R;
+    T_d:=Ln(Exp(-0.2*time_d)+(1.5-0.3719*Exp(-time_d))*sqrt(time_d));
     h_for:=lambda_for/(R*T_d); // heat transfer (formation)
-
-//    Result:=1/((1/h_fluid)+(1/h_cem)+(R_in/R/h_for));
+    Result:=1/((1/h_fluid)+(1/h_cem)+(R_in/(R*h_for)));
 end;
 // ------- heat exchange with the rocks ------------------------------------- //
 procedure T_rocks(i, k: Integer);
@@ -562,19 +561,19 @@ end;
   if (rg1.ItemIndex = 1) then fluid:=1;
   if fluid=0 then ro[0]:=800;
   if fluid=1 then ro[0]:=p[0]*M/Z[0]/Rg/T[0]; // initial bottomhole density
-  if fluid=0 then visc[0]:=0.0005;
+  if fluid=0 then visc[0]:=0.002;
   if fluid=1 then visc[0]:=3.749e-05; // initial bottomhole viscosity
   c:=3500;  // thermal capacity
   kappa:=0.0150; // piezoconductivity
   tM:=500;  // measuring time
-  lambda:=0.065;
-  lambda_for:=1.73;
-  ro_for:=2500;
-  c_for:=800;
-  lambda_cem:=0.35;
+  lambda:=0.03;
+  lambda_for:=2.2;
+  ro_for:=2550;
+  c_for:=880;
+  lambda_cem:=1.2;
   R_in:=R-0.02; // inner wellbore radius
   D:=2*R_in; // flux diameter
-  tau:=720; // time to establish
+  tau:=1000; // time to establish
 // -------------------------------------------------------------------------- //
   Series2.Clear;
 // ************************************************************************** //
@@ -586,7 +585,7 @@ end;
     begin
       T_zumpf(i, k);
       v[i]:=1e-5;
-      p[i]:=p[i-1]-dl*ro[i-1]*g*coss[Ll-i];
+      p[i]:=p[i-1]-dl*1000*g*coss[Ll-i];
       Z[i]:=ZZZ(i);
       fluid_calc(i);
       Series2.AddXY(T[i]-273.15, arg, '', clBlack);

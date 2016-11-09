@@ -1,5 +1,5 @@
 1 [state] - Fluid (0 - oil, 1 - gas)
-0.1 [m] - Well Radius
+0.12 [m] - Well Radius
 1000 [m] - Well Depth
 1 [m] - Depth Step
 40 [atm] - Initial Bottomhole Pressure
@@ -8,5 +8,5 @@
 1 [amount] - Number of Processing Intervals
 800 [m] - Top of Processing Interval
 830 [m] - Bottom of Processing Interval
--4 [°С] - Inflow Temperature
-5000 [m3/day] - Flow Rate
+-5 [°С] - Inflow Temperature
+10000 [m3/day] - Flow Rate
