@@ -133,7 +133,7 @@ begin
   if fluid=1 then e:=-0.000004;
   if fluid=0 then visc[i]:=0.002;
   if fluid=1 then begin
-  critical_visc:=1.61*sqrt(M)*power(p_c/1000, 2/3)/power(T_c, 1/6);
+  critical_visc:=1.61*sqrt(M*1000)*power((p_c/1000000), 2/3)/power(T_c, 1/6);
   if (T[i]/T_c < 1) then visc[i]:=(critical_visc*power(T[i]/T_c, 0.965))/1000000;
   if (T[i]/T_c > 1) then visc[i]:=(critical_visc*power(T[i]/T_c, 0.71+0.29*T_c/T[i]))/1000000;
   end;
@@ -245,10 +245,11 @@ end;
 end;
 
 procedure TTTSWform.exportbtnClick(Sender: TObject);
-var i, j, Size: Integer;
+var i, j, Ll, Size: Integer;
 arg: Double;
 begin
-  Size:=Trunc(L);
+  Ll:=Trunc(L);
+  Size:=Ll;
   ArrayData:=VarArrayCreate([1, Size+2, 1, 7], varVariant);
   begin
     ArrayData[1, 1]:= 'Measured Depth, m';
@@ -263,7 +264,7 @@ begin
     for i:=0 to Trunc(L) do
     begin
       arg:=(Ll-i)*dl/coss[Ll-i]; // arg axis (measured depth)
-      ArrayData[j, 1]:=(depth-i*dl)/coss[Trunc(L)-i];
+      ArrayData[j, 1]:=(depth-i*dl)/coss[Ll-i];
       ArrayData[j, 2]:=T_geo[i];
       ArrayData[j, 3]:=p[i]/101325;
       ArrayData[j, 4]:=T[i];
@@ -562,11 +563,11 @@ end;
   if fluid=0 then ro[0]:=800;
   if fluid=1 then ro[0]:=p[0]*M/Z[0]/Rg/T[0]; // initial bottomhole density
   if fluid=0 then visc[0]:=0.002;
-  if fluid=1 then visc[0]:=3.749e-05; // initial bottomhole viscosity
+  if fluid=1 then visc[0]:=1.19e-05; // initial bottomhole viscosity
   c:=3500;  // thermal capacity
   kappa:=0.0150; // piezoconductivity
   tM:=500;  // measuring time
-  lambda:=0.03;
+  lambda:=0.1;
   lambda_for:=2.2;
   ro_for:=2550;
   c_for:=880;
